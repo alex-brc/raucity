@@ -1,4 +1,3 @@
-
 <div class="h-40"><!-- Spacer --></div>
 
 <div class="hero">
