@@ -27,7 +27,6 @@
         </div>
     </label>
     <ul tabindex="0" class="dropdown-content menu shadow bg-base-100 mt-2">
-        <li><a>Profile</a></li>
         <li><div bind:this={signInPlaceholder}></div></li>
     </ul>
 </div>
