@@ -1,5 +1,5 @@
 <script>
-    import Identity from "./Identity.svelte";
+    import Identity from "../auth/Identity.svelte";
 </script>
 <div class="navbar">
     <div class="flex-1">
