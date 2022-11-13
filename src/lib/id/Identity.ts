@@ -23,83 +23,65 @@ export interface GoogleJWTPayload {
 }
 
 export class Identity {
-    static instance: Identity;
+    static #instance : Identity;
+    public static get instance() : Identity {
+        if(!Identity.#instance)
+            Identity.#instance = new Identity()
+        return Identity.#instance;
+    }
     
     user: User;
+    #jwt?: GoogleJWTPayload;
+    stateCallback?: (state: boolean) => void;
+
     private _signedIn : boolean;
     public get signedIn() : boolean {
         return this._signedIn;
     }
     public set signedIn(v : boolean) {
         this._signedIn = v;
-        this.#stateCallback(v);
+        this.stateCallback?.(v);
     }
 
-    #jwt?: GoogleJWTPayload;
-    #api: accounts;
-    #stateCallback: (state: boolean) => void;
-
-    constructor(api: accounts, stateCallback: (state: boolean) => void ) {
-        this.#api = api;
-        this.#stateCallback = stateCallback;
+    constructor() {
         this._signedIn = false; 
 
         // Retrieve locally stored user data
         this.user = Identity.getUser();
-    }
-    
-    public static signIn (response: CredentialResponse) {
-        let instance = Identity.instance;
-        try {
-            // Attempt to decode JWT
-            instance.#jwt = jwt_decode(response.credential);
 
-            // Switch to authenticated User
-            instance.user = Identity.getUser(instance.#jwt);
-
-        }
-        catch(e) {
-            console.error(e);
-        }
-        finally {
-            // Update state
-            instance.signedIn = true;
-        }
-    }
-
-    public static signOut () {
-        let instance = Identity.instance;
-
-        function onSignOut(response: RevocationResponse) {
-            if(response.successful) {
-                // Grab local user
-                instance.user = Identity.getUser();
-                instance.signedIn = false;
-            }
-        }
-        
-        if(instance.signedIn && instance.#jwt) {
-            instance.#api.id.revoke(instance.#jwt.sub, onSignOut);
-        }
-    }
-
-    public static initialiseContext (api: accounts, stateCallback: (state: boolean) => void ) {
-        // Construct instance
-        let instance = new Identity(api, stateCallback);
-        
-        // Google Identity settings
-        let idConfig: IdConfiguration = {
+        // Initialise the Identity API
+        google.accounts.id.initialize({
             client_id: googleClientId,
             // auto_select: true,
             context: 'use',
             ux_mode: 'popup',
             callback: Identity.signIn
+        });
+    }
+    
+    public static signIn (response: CredentialResponse) {
+        // Attempt to decode JWT
+        Identity.instance.#jwt = jwt_decode(response.credential);
+
+        // Switch to authenticated User
+        Identity.instance.user = Identity.getUser(Identity.instance.#jwt);
+
+        // Update state
+        Identity.instance.signedIn = true;
+    }
+
+    public static signOut () {
+        function onSignOut(response: RevocationResponse) {
+            if(response.successful) {
+                // Grab local user
+                Identity.instance.user = Identity.getUser();
+                Identity.instance.signedIn = false;
+            }
         }
-
-        // Call the Identity API
-        instance.#api.id.initialize(idConfig);
-
-        Identity.instance = instance;
+        
+        if(Identity.instance.signedIn && Identity.instance.#jwt) {
+            google.accounts.id.revoke(Identity.instance.#jwt.sub, onSignOut);
+        }
     }
 
     private static getUser(jwt?: GoogleJWTPayload) {

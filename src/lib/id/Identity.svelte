@@ -3,10 +3,8 @@
 </svelte:head>
 
 <div class="dropdown dropdown-end">
-    <label tabindex="0" id="identity" class="btn placeholder">
-        <div class="bg-neutral-focus text-neutral-content">
-            <span class="text-3xl">A</span>
-        </div>
+    <label tabindex="0" id="identity" class="btn btn-square btn-outline">
+        <Avatar></Avatar>
     </label>
     <ul tabindex="0" class="dropdown-content menu shadow bg-base-100 mt-2">
         <li style="display: {shownWhileSignedOut}"><div bind:this={signInPlaceholder}></div></li>
@@ -15,10 +13,11 @@
 </div>
 
 <script lang="ts">
+    import Avatar from './Avatar.svelte';
     import { onMount } from 'svelte';
     import { Identity } from './Identity';
 
-    let signInPlaceholder: HTMLElement
+    let signInPlaceholder: HTMLElement;
 
     let signedIn = false;
     let identityStateCallback = (state: boolean) => { signedIn = state; }
@@ -26,8 +25,8 @@
     $: shownWhileSignedOut = signedIn ? 'none' : '';
 
     onMount(async () => {
-        // Initialise Google Identity Context
-        Identity.initialiseContext(google.accounts, identityStateCallback);
+        // Setup the Identity manager
+        Identity.instance.stateCallback = identityStateCallback
         // Render sign in button
         google.accounts.id.renderButton(
             signInPlaceholder,

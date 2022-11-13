@@ -7,7 +7,7 @@
 
     let testUser = new User();
 
-    let writeUser = () => { Data.write(testUser) }
-    let readUser = () => { Data.read(User.name, testUser.key) }
+    let writeUser = () => { console.log(testUser); Data.write(testUser); }
+    let readUser = () => { console.log(Data.read(User.name, testUser.key)) }
 
 </script>
