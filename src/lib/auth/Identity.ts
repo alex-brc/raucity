@@ -38,6 +38,7 @@ export class Identity {
     public static logIn (response: CredentialResponse) {
         let instance = Identity.#instance;
         console.log('Got credential from ', response.select_by);
+        console.log(Identity );
         try {
             instance.jwt = jwt_decode(response.credential);
             console.log('Decoded JWT: ', instance.jwt);
