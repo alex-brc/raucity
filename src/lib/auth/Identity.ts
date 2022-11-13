@@ -1,6 +1,8 @@
 import type { IdConfiguration, CredentialResponse, RevocationResponse, accounts } from "google-one-tap";
 import jwt_decode from "jwt-decode";
 import { googleClientId } from "$lib/config";
+import { Data } from "$lib/db/Data";
+import { User } from "$lib/db/DataStructure";
 
 export interface GoogleJWTPayload {
     iss: string; // e.g.:"https://accounts.google.com", The JWT's issuer
@@ -21,72 +23,94 @@ export interface GoogleJWTPayload {
 }
 
 export class Identity {
-    static #instance: Identity;
-
-    signedIn: boolean;
-    jwt?: GoogleJWTPayload;
-    api: accounts;
-    controls: { signIn: HTMLElement, signOut: HTMLElement }
-
-    constructor(api: accounts, controls: { signIn: HTMLElement, signOut: HTMLElement }) {
-        this.api = api;
-        this.signedIn = false;
-        this.controls = controls;
-        this.controls.signOut.style.display = 'none';
+    static instance: Identity;
+    
+    user: User;
+    private _signedIn : boolean;
+    public get signedIn() : boolean {
+        return this._signedIn;
+    }
+    public set signedIn(v : boolean) {
+        this._signedIn = v;
+        this.#stateCallback(v);
     }
 
-    public static logIn (response: CredentialResponse) {
-        let instance = Identity.#instance;
-        console.log('Got credential from ', response.select_by);
-        console.log(Identity );
+    #jwt?: GoogleJWTPayload;
+    #api: accounts;
+    #stateCallback: (state: boolean) => void;
+
+    constructor(api: accounts, stateCallback: (state: boolean) => void ) {
+        this.#api = api;
+        this.#stateCallback = stateCallback;
+        this._signedIn = false; 
+
+        // Retrieve locally stored user data
+        this.user = Identity.getUser();
+    }
+    
+    public static signIn (response: CredentialResponse) {
+        let instance = Identity.instance;
         try {
-            instance.jwt = jwt_decode(response.credential);
-            console.log('Decoded JWT: ', instance.jwt);
+            // Attempt to decode JWT
+            instance.#jwt = jwt_decode(response.credential);
+
+            // Switch to authenticated User
+            instance.user = Identity.getUser(instance.#jwt);
+
         }
         catch(e) {
             console.error(e);
         }
         finally {
+            // Update state
             instance.signedIn = true;
-            instance.controls.signIn.style.display = 'none';
-            instance.controls.signOut.style.display = '';
-            console.log('Signed in', instance.signedIn);
         }
     }
 
     public static signOut () {
-        let instance = Identity.#instance;
-        console.log("Signing out...");
+        let instance = Identity.instance;
 
         function onSignOut(response: RevocationResponse) {
-            console.log('Signed out success: ', response.successful);
-            instance.signedIn = false;
-            instance.controls.signIn.style.display = '';
-            instance.controls.signOut.style.display = 'none';
+            if(response.successful) {
+                // Grab local user
+                instance.user = Identity.getUser();
+                instance.signedIn = false;
+            }
         }
         
-        console.log('Is signed in? ', instance.signedIn);
-        if(instance.signedIn && instance.jwt) {
-            instance.api.id.revoke(instance.jwt.sub, onSignOut);
+        if(instance.signedIn && instance.#jwt) {
+            instance.#api.id.revoke(instance.#jwt.sub, onSignOut);
         }
     }
 
-    public static initialiseContext (api: accounts, controls: { signIn: HTMLElement, signOut: HTMLElement }) {
+    public static initialiseContext (api: accounts, stateCallback: (state: boolean) => void ) {
         // Construct instance
-        let instance = new Identity(api, controls);
-
+        let instance = new Identity(api, stateCallback);
+        
         // Google Identity settings
         let idConfig: IdConfiguration = {
             client_id: googleClientId,
             // auto_select: true,
             context: 'use',
             ux_mode: 'popup',
-            callback: Identity.logIn
+            callback: Identity.signIn
         }
 
         // Call the Identity API
-        instance.api.id.initialize(idConfig);
+        instance.#api.id.initialize(idConfig);
 
-        Identity.#instance = instance;
+        Identity.instance = instance;
+    }
+
+    private static getUser(jwt?: GoogleJWTPayload) {
+        let user = Data.read(User.name, jwt?.sub || User.$Local) as User;
+        // If user does not exist, create new user from JWT
+        if(!user) {
+            console.log('Creating new User...');
+            user = new User(jwt);
+            Data.write(user);
+        }
+        console.log('User: ', user);
+        return user;
     }
 }
