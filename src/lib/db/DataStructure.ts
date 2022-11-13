@@ -1,12 +1,12 @@
 import type { GoogleJWTPayload } from "$lib/auth/Identity";
-import { v4 as generateUUID } from "uuid";
 
 export interface DataStructure {
     get key() : string;
 }
 
 export class User implements DataStructure {
-    uuid: string;
+    static $Local: string = `$Local`;
+
     gid: string | undefined;
     email: string | undefined;
     name: string | undefined;
@@ -14,12 +14,11 @@ export class User implements DataStructure {
     lastName: string | undefined;
 
     get key(): string {
-        return this.uuid;
+        return this.gid || User.$Local;
     }
 
     constructor (jwt?: GoogleJWTPayload) {
-        this.uuid = generateUUID();
-        this.gid = jwt?.sub || "N/A";
+        this.gid = jwt?.sub || undefined;
         this.email = jwt?.email || "N/A";
         this.name = jwt?.name || "N/A";
         this.firstName = jwt?.given_name || "N/A";

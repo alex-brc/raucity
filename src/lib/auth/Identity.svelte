@@ -9,8 +9,8 @@
         </div>
     </label>
     <ul tabindex="0" class="dropdown-content menu shadow bg-base-100 mt-2">
-        <li bind:this={signInItem}><div bind:this={signInPlaceholder}></div></li>
-        <li bind:this={signOutItem}><a class="g_id_signout" on:click={Identity.signOut}>Logout</a></li>
+        <li style="display: {shownWhileSignedOut}"><div bind:this={signInPlaceholder}></div></li>
+        <li style="display: {shownWhileSignedIn}"><a class="g_id_signout" on:click={Identity.signOut}>Logout</a></li>
     </ul>
 </div>
 
@@ -19,11 +19,15 @@
     import { Identity } from './Identity';
 
     let signInPlaceholder: HTMLElement
-    let signInItem: HTMLElement, signOutItem: HTMLElement;
+
+    let signedIn = false;
+    let identityStateCallback = (state: boolean) => { signedIn = state; }
+    $: shownWhileSignedIn = signedIn ? '' : 'none';
+    $: shownWhileSignedOut = signedIn ? 'none' : '';
 
     onMount(async () => {
         // Initialise Google Identity Context
-        Identity.initialiseContext(google.accounts, { signIn: signInItem, signOut: signOutItem } );
+        Identity.initialiseContext(google.accounts, identityStateCallback);
         // Render sign in button
         google.accounts.id.renderButton(
             signInPlaceholder,

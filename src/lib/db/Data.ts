@@ -7,7 +7,7 @@ export class Data {
         let storageKey = this.storageKey(structure, key);
         let raw = localStorage.getItem(storageKey);
         let obj: DataStructure | null = raw ? JSON.parse(raw) : null;
-        console.log(`For key: %s, raw: %s, parsed: `, storageKey, raw, obj);
+        // console.log(`For key: %s, raw: %s, parsed: `, storageKey, raw, obj);
         return obj;
     }
 
@@ -15,7 +15,7 @@ export class Data {
         let json = JSON.stringify(data);
         let key = this.storageKey(data.constructor.name, data.key);
         localStorage.setItem( key, json);
-        console.log(`Written data: %s, at key: %s`, json, key);
+        // console.log(`Written data: %s, at key: %s`, json, key);
     }
 
     private static storageKey(structureName: string, itemKey: string) {
