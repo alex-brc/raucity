@@ -9,8 +9,8 @@
         </div>
     </label>
     <ul tabindex="0" class="dropdown-content menu shadow bg-base-100 mt-2">
-        <li><div bind:this={signInPlaceholder}></div></li>
-        <li><a class="g_id_signout" on:click={Identity.logOut}>Logout</a></li>
+        <li bind:this={signInItem}><div bind:this={signInPlaceholder}></div></li>
+        <li bind:this={signOutItem}><a class="g_id_signout" on:click={Identity.signOut}>Logout</a></li>
     </ul>
 </div>
 
@@ -19,10 +19,11 @@
     import { Identity } from './Identity';
 
     let signInPlaceholder: HTMLElement
+    let signInItem: HTMLElement, signOutItem: HTMLElement;
 
     onMount(async () => {
         // Initialise Google Identity Context
-        Identity.initialiseContext(google.accounts);
+        Identity.initialiseContext(google.accounts, { signIn: signInItem, signOut: signOutItem } );
         // Render sign in button
         google.accounts.id.renderButton(
             signInPlaceholder,

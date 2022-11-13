@@ -23,13 +23,16 @@ export interface GoogleJWTPayload {
 export class Identity {
     static #instance: Identity;
 
+    signedIn: boolean;
     jwt?: GoogleJWTPayload;
     api: accounts;
-    loggedIn: boolean;
+    controls: { signIn: HTMLElement, signOut: HTMLElement }
 
-    constructor(api: accounts) {
+    constructor(api: accounts, controls: { signIn: HTMLElement, signOut: HTMLElement }) {
         this.api = api;
-        this.loggedIn = false;
+        this.signedIn = false;
+        this.controls = controls;
+        this.controls.signOut.style.display = 'none';
     }
 
     public static logIn (response: CredentialResponse) {
@@ -43,29 +46,33 @@ export class Identity {
             console.error(e);
         }
         finally {
-            instance.loggedIn = true;
-            console.log('Logged in', instance.loggedIn);
+            instance.signedIn = true;
+            instance.controls.signIn.style.display = 'none';
+            instance.controls.signOut.style.display = '';
+            console.log('Signed in', instance.signedIn);
         }
     }
 
-    public static logOut () {
+    public static signOut () {
         let instance = Identity.#instance;
-        console.log("Logging out...");
+        console.log("Signing out...");
 
-        function onLogOut(response: RevocationResponse) {
-            console.log('Logout success: ', response.successful);
+        function onSignOut(response: RevocationResponse) {
+            console.log('Signed out success: ', response.successful);
+            instance.signedIn = false;
+            instance.controls.signIn.style.display = '';
+            instance.controls.signOut.style.display = 'none';
         }
         
-        console.log('Is logged in? ', instance.loggedIn);
-        if(instance.loggedIn && instance.jwt) {
-            instance.api.id.revoke(instance.jwt.sub, onLogOut);
-            instance.loggedIn = false;
+        console.log('Is signed in? ', instance.signedIn);
+        if(instance.signedIn && instance.jwt) {
+            instance.api.id.revoke(instance.jwt.sub, onSignOut);
         }
     }
 
-    public static initialiseContext (api: accounts) {
+    public static initialiseContext (api: accounts, controls: { signIn: HTMLElement, signOut: HTMLElement }) {
         // Construct instance
-        let instance = new Identity(api);
+        let instance = new Identity(api, controls);
 
         // Google Identity settings
         let idConfig: IdConfiguration = {
