@@ -3,6 +3,7 @@ import jwt_decode from "jwt-decode";
 import { googleClientId } from "$lib/config";
 import { Data } from "$lib/db/Data";
 import { User } from "$lib/db/DataStructure";
+import type { DispatchOptions } from "svelte/internal";
 
 export interface GoogleJWTPayload {
     iss: string; // e.g.:"https://accounts.google.com", The JWT's issuer
@@ -22,65 +23,73 @@ export interface GoogleJWTPayload {
     jti: string; // e.g.:"abc161803398874def"
 }
 
+export const IdentityContext = Symbol();
+
 export class Identity {
-    static #instance : Identity;
-    public static get instance() : Identity {
-        if(!Identity.#instance)
-            Identity.#instance = new Identity()
-        return Identity.#instance;
+    #user: User;
+    public get user() : User {
+        return this.#user;
     }
     
-    user: User;
-    #jwt?: GoogleJWTPayload;
-    stateCallback?: (state: boolean) => void;
-
-    private _signedIn : boolean;
+    #signedIn: boolean;
     public get signedIn() : boolean {
-        return this._signedIn;
+        return this.#signedIn;
     }
-    public set signedIn(v : boolean) {
-        this._signedIn = v;
-        this.stateCallback?.(v);
-    }
+    
+    #jwt?: GoogleJWTPayload;
 
     constructor() {
-        this._signedIn = false; 
+        // Initial state is signed out
+        this.#signedIn = false; 
 
         // Retrieve locally stored user data
-        this.user = Identity.getUser();
+        this.#user = new User();
+    }
+
+    public init(api: accounts, signInPlaceholder: HTMLElement) {
+        this.#user = Identity.getUser();
 
         // Initialise the Identity API
-        google.accounts.id.initialize({
+        api.id.initialize({
             client_id: googleClientId,
             // auto_select: true,
             context: 'use',
             ux_mode: 'popup',
-            callback: Identity.signIn
+            callback: this.signIn
         });
+
+        // Render sign in button
+        api.id.renderButton(
+            signInPlaceholder,
+            { type: "standard", theme: "outline", text: "signin", size: "medium", logo_alignment: "left" });
     }
     
-    public static signIn (response: CredentialResponse) {
+    public signIn (response: CredentialResponse) {
         // Attempt to decode JWT
-        Identity.instance.#jwt = jwt_decode(response.credential);
+        this.#jwt = jwt_decode(response.credential);
 
         // Switch to authenticated User
-        Identity.instance.user = Identity.getUser(Identity.instance.#jwt);
+        this.#user = Identity.getUser(this.#jwt);
 
         // Update state
-        Identity.instance.signedIn = true;
+        this.#signedIn = true;
+
+        // Send state change
     }
 
-    public static signOut () {
-        function onSignOut(response: RevocationResponse) {
+    public signOut () {
+        let onSignOut = (response: RevocationResponse) => {
             if(response.successful) {
                 // Grab local user
-                Identity.instance.user = Identity.getUser();
-                Identity.instance.signedIn = false;
+                this.#user = Identity.getUser();
+                this.#signedIn = false;
+
+                // Send state change
             }
         }
         
-        if(Identity.instance.signedIn && Identity.instance.#jwt) {
-            google.accounts.id.revoke(Identity.instance.#jwt.sub, onSignOut);
+        if(this.#signedIn && this.#jwt) {
+            google.accounts.id.revoke(this.#jwt.sub, onSignOut);
         }
     }
 
@@ -89,7 +98,7 @@ export class Identity {
         // If user does not exist, create new user from JWT
         if(!user) {
             console.log('Creating new User...');
-            user = new User(jwt);
+            user = jwt ? User.fromJWT(jwt) : new User();
             Data.write(user);
         }
         console.log('User: ', user);

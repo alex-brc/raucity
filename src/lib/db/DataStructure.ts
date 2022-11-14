@@ -18,12 +18,19 @@ export class User implements DataStructure {
         return this.gid || User.$Local;
     }
 
-    constructor (jwt?: GoogleJWTPayload) {
-        this.gid = jwt?.sub || undefined;
+    constructor() {
         this.avatar = Math.floor(Math.random() * 1000000).toString();
-        this.email = jwt?.email || "N/A";
-        this.name = jwt?.name || "N/A";
-        this.firstName = jwt?.given_name || "N/A";
-        this.lastName = jwt?.family_name || "N/A";
+    }
+
+    static fromJWT(jwt: GoogleJWTPayload) : User {
+        let user = new User();
+
+        user.gid = jwt.sub;
+        user.email = jwt.email
+        user.name = jwt.name;
+        user.firstName = jwt.given_name;
+        user.lastName = jwt.family_name;
+
+        return user;
     }
 }

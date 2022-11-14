@@ -14,22 +14,19 @@
 
 <script lang="ts">
     import Avatar from './Avatar.svelte';
-    import { onMount } from 'svelte';
-    import { Identity } from './Identity';
+    import { onMount, createEventDispatcher, setContext } from 'svelte';
+    import { Identity, IdentityContext } from './Identity';
 
     let signInPlaceholder: HTMLElement;
 
-    let signedIn = false;
-    let identityStateCallback = (state: boolean) => { signedIn = state; }
-    $: shownWhileSignedIn = signedIn ? '' : 'none';
-    $: shownWhileSignedOut = signedIn ? 'none' : '';
+    let identity = new Identity();
+    setContext<Identity>(IdentityContext, identity);
+
+    $: shownWhileSignedIn =  identity.signedIn ? '' : 'none';
+    $: shownWhileSignedOut = identity.signedIn ? 'none' : '';
 
     onMount(async () => {
-        // Setup the Identity manager
-        Identity.instance.stateCallback = identityStateCallback
-        // Render sign in button
-        google.accounts.id.renderButton(
-            signInPlaceholder,
-            { type: "standard", theme: "outline", text: "signin", size: "medium", logo_alignment: "left" });
+        // Initiliase Identity context
+        identity.init(google.accounts, signInPlaceholder);
     });
 </script>
