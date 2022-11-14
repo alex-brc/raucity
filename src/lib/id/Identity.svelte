@@ -8,25 +8,22 @@
     </label>
     <ul tabindex="0" class="dropdown-content menu shadow bg-base-100 mt-2">
         <li style="display: {shownWhileSignedOut}"><div bind:this={signInPlaceholder}></div></li>
-        <li style="display: {shownWhileSignedIn}"><a class="g_id_signout" on:click={Identity.signOut}>Logout</a></li>
+        <li style="display: {shownWhileSignedIn}"><a class="g_id_signout" on:click={$identity.signOut}>Logout</a></li>
     </ul>
 </div>
 
 <script lang="ts">
     import Avatar from './Avatar.svelte';
-    import { onMount, createEventDispatcher, setContext } from 'svelte';
-    import { Identity, IdentityContext } from './Identity';
-
+    import { onMount } from 'svelte';
+    import { currentUser, identity } from './Identity';
+    
     let signInPlaceholder: HTMLElement;
 
-    let identity = new Identity();
-    setContext<Identity>(IdentityContext, identity);
-
-    $: shownWhileSignedIn =  identity.signedIn ? '' : 'none';
-    $: shownWhileSignedOut = identity.signedIn ? 'none' : '';
+    $: shownWhileSignedOut =  $currentUser ? '' : 'none';
+    $: shownWhileSignedIn = $currentUser ? 'none' : '';
 
     onMount(async () => {
         // Initiliase Identity context
-        identity.init(google.accounts, signInPlaceholder);
+        $identity.init(google.accounts, signInPlaceholder);
     });
 </script>

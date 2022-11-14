@@ -1,17 +1,37 @@
-<img bind:this={placeholder} alt="User Avatar" class="hidden w-auto"/>
+<img src={avatarURL} style="display: {$currentUser ? '' : 'none'}" alt="User Avatar" class="w-auto"/>
 
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
-    import { Identity, IdentityContext } from "./Identity";
-    import { Avatar } from "./Avatar";
+    import type { User } from "$lib/db/DataStructure";
+    import { currentUser } from "./Identity"
 
-    let placeholder: HTMLImageElement;
+    $: avatarURL = generateDicebearAvatarURL($currentUser as User);
 
-    const identity = getContext<Identity>(IdentityContext);
+    function generateDicebearAvatarURL(user?: User ) {
+        if (!user)
+            return '';
+            
+        // Build base URL
+        let url = avatarConfig.url +  avatarConfig.version + '/api/' + avatarConfig.style + '/' + user.avatar + '.svg';
 
-    onMount(async () => {
-        // Render avatar
-        placeholder.src = Avatar.generateURL(identity.user.avatar);
-        placeholder.classList.remove('hidden');
-    });
+        // Enhance with additional options if available
+        let options = Object.entries(avatarConfig.options) as [string, any][];
+
+        // Concatenate options
+        let optionsString = options.map(([key, value]) => key + '=' + value).join('&');
+
+        // Put options into URL
+        if(optionsString)
+            url += '?' + optionsString
+
+        return url;
+    }
+
+    var avatarConfig = {
+        url: "https://avatars.dicebear.com/",
+        version: 4.9,
+        style: "big-smile",
+        options: {
+            flip: true,
+        }
+    } 
 </script>

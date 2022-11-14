@@ -1,9 +1,9 @@
-import type { IdConfiguration, CredentialResponse, RevocationResponse, accounts } from "google-one-tap";
+import type { CredentialResponse, RevocationResponse, accounts } from "google-one-tap";
 import jwt_decode from "jwt-decode";
 import { googleClientId } from "$lib/config";
 import { Data } from "$lib/db/Data";
 import { User } from "$lib/db/DataStructure";
-import type { DispatchOptions } from "svelte/internal";
+import { readable, writable } from "svelte/store";
 
 export interface GoogleJWTPayload {
     iss: string; // e.g.:"https://accounts.google.com", The JWT's issuer
@@ -23,31 +23,24 @@ export interface GoogleJWTPayload {
     jti: string; // e.g.:"abc161803398874def"
 }
 
-export const IdentityContext = Symbol();
+export const currentUser = writable();
 
 export class Identity {
-    #user: User;
-    public get user() : User {
-        return this.#user;
-    }
+    private _jwt?: GoogleJWTPayload;
     
-    #signedIn: boolean;
-    public get signedIn() : boolean {
-        return this.#signedIn;
+    private _user?: User;
+    public get user() : User | undefined {
+        return this._user;
     }
-    
-    #jwt?: GoogleJWTPayload;
-
-    constructor() {
-        // Initial state is signed out
-        this.#signedIn = false; 
-
-        // Retrieve locally stored user data
-        this.#user = new User();
+    public set user(v : User | undefined) {
+        this._user = v;
+        console.log('Before');
+        currentUser.set(this._user);
+        console.log('After');
     }
 
     public init(api: accounts, signInPlaceholder: HTMLElement) {
-        this.#user = Identity.getUser();
+        this.user = Identity.getUser();
 
         // Initialise the Identity API
         api.id.initialize({
@@ -66,30 +59,22 @@ export class Identity {
     
     public signIn (response: CredentialResponse) {
         // Attempt to decode JWT
-        this.#jwt = jwt_decode(response.credential);
+        this._jwt = jwt_decode(response.credential);
 
         // Switch to authenticated User
-        this.#user = Identity.getUser(this.#jwt);
-
-        // Update state
-        this.#signedIn = true;
-
-        // Send state change
+        this.user = Identity.getUser(this._jwt);
     }
 
     public signOut () {
         let onSignOut = (response: RevocationResponse) => {
             if(response.successful) {
                 // Grab local user
-                this.#user = Identity.getUser();
-                this.#signedIn = false;
-
-                // Send state change
+                this.user = Identity.getUser();
             }
         }
         
-        if(this.#signedIn && this.#jwt) {
-            google.accounts.id.revoke(this.#jwt.sub, onSignOut);
+        if(this._jwt) {
+            google.accounts.id.revoke(this._jwt.sub, onSignOut);
         }
     }
 
@@ -105,3 +90,5 @@ export class Identity {
         return user;
     }
 }
+
+export const identity = readable(new Identity());
