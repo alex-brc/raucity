@@ -1,12 +1,13 @@
-<img src={avatarURL} style="display: {$currentUser ? '' : 'none'}" alt="User Avatar" class="w-auto"/>
+<img src={avatarURL} style="display: {$user ? '' : 'none'}" alt="User Avatar"/>
 
 <script lang="ts">
     import type { User } from "$lib/db/DataStructure";
-    import { currentUser } from "./Identity"
+    import { user } from "./Identity"
 
-    $: avatarURL = generateDicebearAvatarURL($currentUser as User);
+    $: avatarURL = generateDicebearAvatarURL($user);
 
     function generateDicebearAvatarURL(user?: User ) {
+        console.log("generating avatar for user: ", user);
         if (!user)
             return '';
             
