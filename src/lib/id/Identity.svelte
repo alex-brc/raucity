@@ -3,23 +3,34 @@
 </svelte:head>
 
 <div class="dropdown dropdown-end">
-    <label tabindex="0" id="identity" class="btn btn-square btn-outline">
+    <label for="user-settings-modal" id="identity" class="btn btn-square btn-outline">
         <Avatar></Avatar>
     </label>
-    <ul class="dropdown-content menu shadow bg-base-100 mt-2">
-        <li style="display: {signedIn ? 'none' : ''}"><div bind:this={signInPlaceholder}></div></li>
-        <li style="display: {signedIn ? '' : 'none'}"><a class="g_id_signout" on:click={signOut}>Logout</a></li>
-    </ul>
+
+    <input type="checkbox" id="user-settings-modal" class="modal-toggle" />
+    <label for="user-settings-modal" class="modal cursor-pointer">
+    <label class="modal-box relative">
+        <div class="form-control">
+            <div style="display: {signedIn ? '' : 'none'}">
+                <!-- Displayed when user is logged in -->
+                <button class="btn btn-outline g_id_signout" on:click={Identity.signOut}>Logout</button>
+            </div>
+            <div style="display: {signedIn ? 'none' : ''}">
+                <!-- Displayed when user is NOT logged in -->
+                <div bind:this={signInPlaceholder}></div>   
+            </div>
+        </div>
+    </label>
+    </label>
 </div>
 
 <script lang="ts"> 
-    import Avatar from './Avatar.svelte';
+    import Avatar from './avatar/Avatar.svelte';
     import { onMount } from 'svelte';
     import { Identity, user } from './Identity';
     
     let signInPlaceholder: HTMLElement;
     $: signedIn = $user?.gid !== undefined
-    let signOut = () => { Identity.signOut(); }
 
     onMount(async () => {
         // Initiliase Identity context

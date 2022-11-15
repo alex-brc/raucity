@@ -1,9 +1,10 @@
 import type { CredentialResponse, RevocationResponse, accounts } from "google-one-tap";
 import jwt_decode from "jwt-decode";
-import { googleClientId } from "$lib/config";
 import { Data } from "$lib/db/Data";
-import { User } from "$lib/db/DataStructure";
-import { get, readable, writable, derived } from "svelte/store";
+import { $Local } from "$lib/db/DataStructure";
+import { User } from "$lib/db/User"
+import { get, writable } from "svelte/store";
+import { gsiButtonConfiguration, idConfiguration } from "$lib/config";
 
 export interface GoogleJWTPayload {
     iss: string; // e.g.:"https://accounts.google.com", The JWT's issuer
@@ -32,18 +33,13 @@ export class Identity {
         user.set( Identity.loadUser() );
 
         // Initialise the Identity API
-        api.id.initialize({
-            client_id: googleClientId,
-            // auto_select: true,
-            context: 'use',
-            ux_mode: 'popup',
-            callback: Identity.signIn
-        });
+        idConfiguration.callback = Identity.signIn;
+        api.id.initialize(idConfiguration);
 
         // Render sign in button
         api.id.renderButton(
             signInPlaceholder,
-            { type: "standard", theme: "outline", text: "signin", size: "medium", logo_alignment: "left" });
+            gsiButtonConfiguration);
 
         // Save API for later
         Identity._api = api;
@@ -73,7 +69,8 @@ export class Identity {
     }
 
     private static loadUser(jwt?: GoogleJWTPayload) {
-        let user = Data.read(User.name, jwt?.sub || User.$Local) as User;
+        let user = Data.read(User.name, jwt?.sub || $Local) as User;
+
         // If user does not exist, create new user from JWT
         if(!user) {
             console.log('Creating new User...');

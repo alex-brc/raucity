@@ -3,7 +3,7 @@
 
 <script>
     import { Data } from "$lib/db/Data";
-    import { User } from "$lib/db/DataStructure";
+    import { User } from "$lib/db/User";
     import { user, Identity } from "$lib/id/Identity"
 
     let testUser = new User();
