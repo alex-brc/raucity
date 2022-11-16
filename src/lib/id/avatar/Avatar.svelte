@@ -1,8 +1,8 @@
-<img src={avatarURL} style="display: {$user ? '' : 'none'}" alt="User Avatar"/>
+<img src={avatarURL} style="display: {$user ? '' : 'none'}" alt="User Avatar" class="h-auto w-auto"/>
 
 <script lang="ts">
     import { user } from "../Identity"
-    import { generateDicebearAvatarURL } from "./Avatar"
+    import { generateAvatarURL } from "./Avatar"
 
-    $: avatarURL = generateDicebearAvatarURL($user);
+    $: avatarURL = generateAvatarURL($user);
 </script>

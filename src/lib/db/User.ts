@@ -1,12 +1,11 @@
 import type { GoogleJWTPayload } from "$lib/id/Identity";
+import { Data } from "./Data";
 import type { DataStructure } from "./DataStructure";
 import { $Local } from "./DataStructure"
 
 export class User implements DataStructure {
     gid?: string;
-    avatar: {
-        seed: string;
-    }
+    avatarSeed: string;
     email?: string;
     name?: string;
     firstName?: string;
@@ -17,9 +16,7 @@ export class User implements DataStructure {
     }
 
     constructor() {
-        this.avatar = {
-            seed: Math.floor(Math.random() * 1000000).toString(),
-        }
+        this.avatarSeed = Data.seed();
     }
 
     static fromJWT(jwt: GoogleJWTPayload, avatar?: string) : User {
@@ -31,7 +28,7 @@ export class User implements DataStructure {
         user.firstName = jwt.given_name;
         user.lastName = jwt.family_name;
 
-        user.avatar.seed = avatar || user.avatar.seed; 
+        user.avatarSeed = avatar || user.avatarSeed; 
 
         return user;
     }

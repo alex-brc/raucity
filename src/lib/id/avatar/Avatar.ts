@@ -2,12 +2,12 @@
 import { avatarConfig } from "$lib/config";
 import type { User } from "$lib/db/User";
 
-export function generateDicebearAvatarURL(user?: User ) {
+export function generateAvatarURL(user?: User ) {
     if (!user)
         return '';
 
     // Build base URL
-    let url = avatarConfig.url +  avatarConfig.version + '/api/' + avatarConfig.style + '/' + user.avatar.seed + '.svg';
+    let url = avatarConfig.url +  avatarConfig.version + '/api/' + avatarConfig.style + '/' + user.avatarSeed + '.svg';
 
     // Enhance with additional options if available
     let options = Object.entries(avatarConfig.options) as [string, any][];

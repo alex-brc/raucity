@@ -68,6 +68,19 @@ export class Identity {
         }
     }
 
+    public static randomizeAvatar() {
+        let currentUser = Object.assign(new User(), get(user));
+        console.log("current is ", currentUser);
+        if(!currentUser)
+            return;
+        
+        currentUser.avatarSeed = Data.seed();
+
+        user.set(currentUser);
+
+        Data.write(currentUser);
+    }
+
     private static loadUser(jwt?: GoogleJWTPayload) {
         let user = Data.read(User.name, jwt?.sub || $Local) as User;
 
