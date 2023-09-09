@@ -26,3 +26,11 @@ export const avatarConfig = {
         flip: true,
     }
 } 
+
+export const threeConfig = {
+    camera: {
+        fov: 75,
+        near: 0.1,
+        far: 1000
+    }
+} 
