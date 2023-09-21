@@ -1,4 +1,4 @@
-<img src={avatarURL} style="display: {$user ? '' : 'none'}" alt="User Avatar" class="h-auto w-auto"/>
+<img src={avatarURL} alt="User Avatar" class="h-auto w-auto"/>
 
 <script lang="ts">
     import { user } from "../Identity"

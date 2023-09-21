@@ -12,27 +12,27 @@
         <label class="modal-box relative" for="">
             <div class="form-control">
 
-                
             <div class="input-group justify-between">
                 <div class="flex-col align-middle">
                     <h2 class="text-3xl font-bold"> {helloText} </h2>
                     <h3 class="py-2"> {helloDescription} </h3>
                 </div>
-                <button class="btn btn-circle btn-ghost w-2/12 h-auto" on:click={Identity.randomizeAvatar}>
-                    <Avatar></Avatar>
-                </button>
+                <div class="tooltip tooltip-left" data-tip="Click me to randomize your avatar!">
+                    <button class="btn btn-square btn-ghost w-20 h-auto" on:click={Identity.randomizeAvatar}>
+                        <Avatar></Avatar>
+                    </button>
+                </div>
+                
             </div>
             
             <div class="divider"></div> 
 
-            <div style="display: {signedIn ? '' : 'none'}">
-                <!-- Displayed when user is logged in -->
+            {#if signedIn}
                 <button class="btn btn-outline g_id_signout" on:click={Identity.signOut}>Logout</button>
-            </div>
-            <div style="display: {signedIn ? 'none' : ''}">
-                <!-- Displayed when user is NOT logged in -->
-                <div bind:this={signInPlaceholder}></div>   
-            </div>
+            {:else}
+                <div id="googleSignIn" bind:this={signInPlaceholder}></div>   
+            {/if}
+            
         </label>
     </label>
 </div>
