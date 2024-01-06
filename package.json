@@ -27,7 +27,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@iconify/svelte": "^3.0.0",
+		"@iconify/svelte": "^3.1.6",
 		"@types/google-one-tap": "^1.2.2",
 		"jwt-decode": "^3.1.2"
 	}
